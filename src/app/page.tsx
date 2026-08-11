@@ -9,7 +9,8 @@ import Quote from "@/components/quote";
 import FAQ from "@/components/faq";
 import Footer from "@/components/footer";
 // import LoadingScreen from "@/components/loading-screen";
-import BackToTop from "@/components/back-to-top";
+import AIChat from "@/components/AIChat";
+
 
 
 export default function Home() {
@@ -27,10 +28,10 @@ export default function Home() {
         <Quote />
         <FAQ />
       </main>
+      
+      <AIChat />
 
       <Footer />
-
-       <BackToTop />
     </>
   );
 }
