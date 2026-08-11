@@ -12,7 +12,7 @@ export async function sendMessengerMessage(
   }
 
   const response = await fetch(
-    "https://graph.facebook.com/vXX.X/me/messages",
+    "https://graph.facebook.com/v26.0/me/messages",
     {
       method: "POST",
 

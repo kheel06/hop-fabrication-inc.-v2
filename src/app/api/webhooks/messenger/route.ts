@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { generateAIResponse } from "@/lib/ai";
+import { sendMessengerMessage } from "@/lib/meta-messenger";
 
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN;
 
@@ -11,10 +13,9 @@ export async function GET(request: Request) {
 
   if (
     mode === "subscribe" &&
-    token === VERIFY_TOKEN
+    token === VERIFY_TOKEN &&
+    challenge
   ) {
-    console.log("META WEBHOOK VERIFIED");
-
     return new Response(challenge, {
       status: 200,
       headers: {
@@ -32,20 +33,53 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    console.log(
-      "MESSENGER WEBHOOK:",
-      JSON.stringify(body, null, 2)
-    );
+    if (body.object !== "page") {
+      return NextResponse.json({
+        status: "ignored",
+      });
+    }
+
+    for (const entry of body.entry || []) {
+      for (const event of entry.messaging || []) {
+        const senderId = event.sender?.id;
+        const messageText = event.message?.text;
+
+        if (!senderId || !messageText) {
+          continue;
+        }
+
+        console.log(
+          "CUSTOMER:",
+          senderId,
+          messageText
+        );
+
+        const aiResponse =
+          await generateAIResponse(messageText);
+
+        await sendMessengerMessage(
+          senderId,
+          aiResponse
+        );
+      }
+    }
 
     return NextResponse.json({
       status: "EVENT_RECEIVED",
     });
   } catch (error) {
-    console.error("MESSENGER WEBHOOK ERROR:", error);
+    console.error(
+      "MESSENGER WEBHOOK ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { error: "Invalid webhook" },
-      { status: 400 }
+      {
+        error: "Webhook processing failed",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
