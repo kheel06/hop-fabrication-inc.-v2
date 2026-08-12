@@ -1,37 +1,70 @@
 import Groq from "groq-sdk";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+const apiKey = process.env.GROQ_API_KEY;
+
+if (!apiKey) {
+  console.error("GROQ_API_KEY is missing from environment variables.");
+}
+
+const groq = apiKey
+  ? new Groq({
+      apiKey,
+    })
+  : null;
 
 const SYSTEM_PROMPT = `
 You are the AI Project Assistant for HOP Fabrications Inc.
 
-HOP Fabrications builds custom food carts, food kiosks, mobile food concepts,
-and custom fabrication projects.
+HOP Fabrications specializes in:
+- Custom food carts
+- Food kiosks
+- Mobile food concepts
+- Custom fabrication
+- Commercial fabrication projects
+- Custom structures and installations
 
-Your job is to help potential customers describe their project.
+Your primary job is to help potential customers clearly describe
+their project and guide them toward the next step.
 
 Be friendly, professional, concise, and helpful.
 
-Ask useful questions such as:
+Ask ONE useful question at a time.
 
-- What type of food business are they planning?
-- What will they be selling?
-- Do they need a food cart, kiosk, trailer, or another structure?
-- What size do they have in mind?
-- Where will it be used?
-- Do they have a target budget?
-- Do they already have branding or a design?
+When appropriate, learn about:
 
-Do NOT invent prices or guarantees.
+- Type of food business
+- What they will be selling
+- Cart, kiosk, trailer, or other structure
+- Approximate dimensions
+- Materials
+- Where the project will be used
+- Indoor or outdoor use
+- Target budget
+- Timeline
+- Existing branding
+- Existing drawings or designs
+- Reference images
 
-If the customer wants a quote, encourage them to request a quote from HOP Fabrications.
+Do NOT invent prices.
 
-If the customer wants to speak with a human or continue with the HOP team,
-tell them that you can help connect them with the HOP team through Messenger.
+Do NOT promise exact costs, delivery dates, engineering approval,
+permits, certifications, or manufacturing capabilities unless the
+customer has provided that information.
+
+If the customer asks for pricing, explain that HOP needs project
+details before a proper quote can be prepared.
+
+If the customer wants a quote, guide them toward requesting a quote
+from HOP Fabrications.
+
+If the customer wants to speak with a person, tell them that the
+HOP team can continue the conversation through Messenger.
 
 Keep responses relatively short because this is a website chat widget.
+
+Avoid long paragraphs.
+
+Sound like a helpful HOP project consultant, not a generic AI chatbot.
 `;
 
 type ConversationMessage = {
@@ -43,6 +76,16 @@ export async function generateAIResponse(
   message: string,
   conversation: ConversationMessage[] = []
 ) {
+  if (!groq) {
+    throw new Error(
+      "GROQ_API_KEY is not configured. Add GROQ_API_KEY to .env.local and restart the development server."
+    );
+  }
+
+  if (!message?.trim()) {
+    throw new Error("Message cannot be empty.");
+  }
+
   const messages = [
     {
       role: "system" as const,
@@ -54,7 +97,8 @@ export async function generateAIResponse(
         (item) =>
           item &&
           (item.role === "user" || item.role === "assistant") &&
-          typeof item.content === "string"
+          typeof item.content === "string" &&
+          item.content.trim().length > 0
       )
       .map((item) => ({
         role: item.role,
@@ -63,19 +107,30 @@ export async function generateAIResponse(
 
     {
       role: "user" as const,
-      content: message,
+      content: message.trim(),
     },
   ];
 
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages,
-    temperature: 0.7,
-    max_completion_tokens: 500,
-  });
+  try {
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages,
+      temperature: 0.7,
+      max_completion_tokens: 500,
+    });
 
-  return (
-    completion.choices[0]?.message?.content ||
-    "Sorry, I couldn't generate a response."
-  );
+    const response = completion.choices[0]?.message?.content;
+
+    if (!response) {
+      throw new Error("Groq returned an empty response.");
+    }
+
+    return response.trim();
+  } catch (error) {
+    console.error("========== GROQ ERROR ==========");
+    console.error(error);
+    console.error("================================");
+
+    throw error;
+  }
 }

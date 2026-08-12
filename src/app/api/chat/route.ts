@@ -24,11 +24,17 @@ export async function POST(request: Request) {
       response,
     });
   } catch (error) {
-    console.error("AI CHAT ERROR:", error);
+    console.error("========== AI CHAT ERROR ==========");
+    console.error(error);
+    console.error("===================================");
 
     return NextResponse.json(
       {
         error: "AI service failed",
+        details:
+          error instanceof Error
+            ? error.message
+            : String(error),
       },
       {
         status: 500,
