@@ -10,6 +10,7 @@ import FAQ from "@/components/faq";
 import Footer from "@/components/footer";
 // import LoadingScreen from "@/components/loading-screen";
 import AIChat from "@/components/AIChat";
+import Clients from "@/components/clients";
 
 
 
@@ -26,6 +27,7 @@ export default function Home() {
         <Process />
         <About />
         <Quote />
+        <Clients />
         <FAQ />
       </main>
       
