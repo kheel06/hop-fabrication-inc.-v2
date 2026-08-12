@@ -3,7 +3,7 @@ const PAGE_ACCESS_TOKEN =
 
 export async function sendMessengerMessage(
   recipientId: string,
-  text: string
+  message: string
 ) {
   if (!PAGE_ACCESS_TOKEN) {
     throw new Error(
@@ -12,7 +12,7 @@ export async function sendMessengerMessage(
   }
 
   const response = await fetch(
-    "https://graph.facebook.com/v26.0/me/messages",
+    `https://graph.facebook.com/vXX.X/me/messages?access_token=${PAGE_ACCESS_TOKEN}`,
     {
       method: "POST",
 
@@ -26,10 +26,8 @@ export async function sendMessengerMessage(
         },
 
         message: {
-          text,
+          text: message,
         },
-
-        access_token: PAGE_ACCESS_TOKEN,
       }),
     }
   );
@@ -37,11 +35,14 @@ export async function sendMessengerMessage(
   const data = await response.json();
 
   if (!response.ok) {
-    console.error("META SEND ERROR:", data);
+    console.error(
+      "MESSENGER API ERROR:",
+      data
+    );
 
     throw new Error(
       data?.error?.message ||
-      "Failed to send Messenger message"
+        "Failed to send Messenger message"
     );
   }
 

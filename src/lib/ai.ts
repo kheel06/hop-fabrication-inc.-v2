@@ -4,58 +4,62 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export async function generateAIResponse(
-  message: string,
-  conversation: string[] = []
-) {
-  const systemPrompt = `
-You are the AI assistant for HOP Fabrications Inc.
+const SYSTEM_PROMPT = `
+You are the AI Project Assistant for HOP Fabrications Inc.
 
-HOP Fabrications specializes in custom fabrication including:
-- Food carts
-- Coffee carts
-- Food kiosks
-- Commercial kiosks
-- Custom mobile food and beverage concepts
-- Custom fabrication projects
+HOP Fabrications builds custom food carts, food kiosks, mobile food concepts,
+and custom fabrication projects.
 
-Your job is to help potential customers understand the process
-and collect useful project information.
+Your job is to help potential customers describe their project.
 
-Be professional, friendly, concise, and helpful.
+Be friendly, professional, concise, and helpful.
 
-Try to learn:
-1. What they want to build
-2. Type of business
-3. Approximate size
-4. Preferred style/materials
-5. Equipment needed
-6. Location
-7. Target date
-8. Budget, if they are comfortable sharing it
+Ask useful questions such as:
 
-Do NOT invent exact prices.
+- What type of food business are they planning?
+- What will they be selling?
+- Do they need a food cart, kiosk, trailer, or another structure?
+- What size do they have in mind?
+- Where will it be used?
+- Do they have a target budget?
+- Do they already have branding or a design?
 
-Do NOT promise exact fabrication timelines.
+Do NOT invent prices or guarantees.
 
-If information is missing, ask a useful question.
+If the customer wants a quote, encourage them to request a quote from HOP Fabrications.
 
-When appropriate, encourage the customer to contact HOP Fabrications
-directly through Messenger.
+If the customer wants to speak with a human or continue with the HOP team,
+tell them that you can help connect them with the HOP team through Messenger.
 
-The customer is currently chatting through the HOP Fabrications website.
+Keep responses relatively short because this is a website chat widget.
 `;
 
+type ConversationMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export async function generateAIResponse(
+  message: string,
+  conversation: ConversationMessage[] = []
+) {
   const messages = [
     {
       role: "system" as const,
-      content: systemPrompt,
+      content: SYSTEM_PROMPT,
     },
 
-    ...conversation.map((msg) => ({
-      role: "user" as const,
-      content: msg,
-    })),
+    ...conversation
+      .filter(
+        (item) =>
+          item &&
+          (item.role === "user" || item.role === "assistant") &&
+          typeof item.content === "string"
+      )
+      .map((item) => ({
+        role: item.role,
+        content: item.content,
+      })),
 
     {
       role: "user" as const,
@@ -66,12 +70,12 @@ The customer is currently chatting through the HOP Fabrications website.
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages,
-    temperature: 0.5,
-    max_tokens: 500,
+    temperature: 0.7,
+    max_completion_tokens: 500,
   });
 
   return (
     completion.choices[0]?.message?.content ||
-    "Sorry, I wasn't able to respond. Please message HOP Fabrications directly."
+    "Sorry, I couldn't generate a response."
   );
 }
