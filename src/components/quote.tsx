@@ -1,18 +1,98 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, Check, Mail, Phone } from "lucide-react";
+import { ArrowUpRight, Check, Mail, Phone, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
+
+type QuoteFormData = {
+  name: string;
+  business: string;
+  phone: string;
+  email: string;
+  type: string;
+  message: string;
+};
 
 export default function Quote() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
-    setSubmitted(true);
+
+    if (isSubmitting) return;
+
+    const form = e.currentTarget;
+
+    setError("");
+    setIsSubmitting(true);
+
+    const formData = new FormData(form);
+
+    const data: QuoteFormData = {
+      name: String(formData.get("name") ?? "").trim(),
+      business: String(formData.get("business") ?? "").trim(),
+      phone: String(formData.get("phone") ?? "").trim(),
+      email: String(formData.get("email") ?? "").trim(),
+      type: String(formData.get("type") ?? "").trim(),
+      message: String(formData.get("message") ?? "").trim(),
+    };
+
+    console.log("SENDING QUOTE DATA:", data);
+
+    try {
+      const response = await fetch("/api/quote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      let result: {
+        success?: boolean;
+        message?: string;
+        error?: string;
+      } = {};
+
+      try {
+        result = await response.json();
+      } catch {
+        result = {};
+      }
+
+      console.log("QUOTE API RESPONSE:", result);
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            result.message ||
+            "Failed to submit your quote request."
+        );
+      }
+
+      console.log("QUOTE SUBMITTED:", result);
+
+      setSubmitted(true);
+      form.reset();
+    } catch (err) {
+      console.error("Quote submission error:", err);
+
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.";
+
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  // Reusable text animation
   const textReveal = {
     initial: {
       opacity: 0,
@@ -37,24 +117,20 @@ export default function Quote() {
       id="quote"
       className="relative overflow-hidden bg-foreground text-background"
     >
-      {/* =====================================================
-          BACKGROUND DETAILS
-      ====================================================== */}
+      {/* Background */}
       <div className="pointer-events-none absolute inset-0">
-        {/* Gold glow */}
         <div className="absolute -right-40 top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full bg-primary/[0.08] blur-3xl" />
 
-        {/* Grid lines */}
         <div className="absolute left-0 top-1/3 h-px w-full bg-white/[0.06]" />
+
         <div className="absolute left-1/2 top-0 h-full w-px bg-white/[0.04]" />
       </div>
 
       <div className="relative mx-auto max-w-[1500px] px-6 py-24 sm:px-10 lg:px-16 lg:py-32 xl:px-20">
         <div className="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-24">
-
-          {/* =================================================
+          {/* =========================================================
               LEFT SIDE
-          ================================================== */}
+          ========================================================= */}
           <div>
             {/* Eyebrow */}
             <motion.div
@@ -122,9 +198,17 @@ export default function Quote() {
               className="mt-6 text-5xl font-black leading-[0.87] tracking-[-0.055em] sm:text-6xl lg:text-8xl"
             >
               <motion.span
-                initial={{ opacity: 0, y: 35 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                initial={{
+                  opacity: 0,
+                  y: 35,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
                 transition={{
                   duration: 0.7,
                   delay: 0.15,
@@ -138,9 +222,17 @@ export default function Quote() {
               <br />
 
               <motion.span
-                initial={{ opacity: 0, y: 35 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                initial={{
+                  opacity: 0,
+                  y: 35,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
                 transition={{
                   duration: 0.7,
                   delay: 0.25,
@@ -154,9 +246,17 @@ export default function Quote() {
               <br />
 
               <motion.span
-                initial={{ opacity: 0, y: 35 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                initial={{
+                  opacity: 0,
+                  y: 35,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
                 transition={{
                   duration: 0.7,
                   delay: 0.35,
@@ -164,8 +264,7 @@ export default function Quote() {
                 }}
                 className="inline-block text-white/25"
               >
-                GREAT
-                <span className="text-primary">.</span>
+                GREAT<span className="text-primary">.</span>
               </motion.span>
             </motion.h2>
 
@@ -226,9 +325,17 @@ export default function Quote() {
             >
               {/* Contact */}
               <motion.div
-                initial={{ opacity: 0, x: -15 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
+                initial={{
+                  opacity: 0,
+                  x: -15,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
                 transition={{
                   duration: 0.5,
                   delay: 0.7,
@@ -249,9 +356,17 @@ export default function Quote() {
 
               {/* Quote */}
               <motion.div
-                initial={{ opacity: 0, x: -15 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
+                initial={{
+                  opacity: 0,
+                  x: -15,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
                 transition={{
                   duration: 0.5,
                   delay: 0.8,
@@ -272,9 +387,9 @@ export default function Quote() {
             </motion.div>
           </div>
 
-          {/* =================================================
+          {/* =========================================================
               FORM
-          ================================================== */}
+          ========================================================= */}
           <motion.div
             initial={{
               opacity: 0,
@@ -301,12 +416,14 @@ export default function Quote() {
             <div className="absolute -right-2 -top-2 h-full w-full rounded-[1.7rem] border border-primary/30 sm:-right-3 sm:-top-3" />
 
             <div className="relative rounded-[1.5rem] bg-background p-6 text-foreground shadow-2xl sm:p-8 lg:p-10">
-
               {submitted ? (
-                /* =================================================
-                    SUCCESS STATE
-                ================================================== */
-                <div className="flex min-h-[520px] items-center justify-center text-center">
+                /* =====================================================
+                   SUCCESS STATE
+                ===================================================== */
+                <div
+                  className="flex min-h-[520px] items-center justify-center text-center"
+                  aria-live="polite"
+                >
                   <div>
                     <motion.div
                       initial={{
@@ -380,7 +497,10 @@ export default function Quote() {
                         delay: 0.35,
                       }}
                       type="button"
-                      onClick={() => setSubmitted(false)}
+                      onClick={() => {
+                        setSubmitted(false);
+                        setError("");
+                      }}
                       className="mt-7 text-xs font-bold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-primary"
                     >
                       Submit another request
@@ -389,7 +509,9 @@ export default function Quote() {
                 </div>
               ) : (
                 <>
-                  {/* Form header */}
+                  {/* =================================================
+                      FORM HEADER
+                  ================================================= */}
                   <motion.div
                     initial={{
                       opacity: 0,
@@ -492,15 +614,19 @@ export default function Quote() {
                       }}
                       className="mt-2 text-sm text-muted-foreground"
                     >
-                      Fill out the form and let&apos;s discuss what you
-                      want to build.
+                      Fill out the form and let&apos;s discuss what
+                      you want to build.
                     </motion.p>
                   </motion.div>
 
-                  {/* Form */}
+                  {/* =================================================
+                      FORM
+                  ================================================= */}
                   <form
                     onSubmit={handleSubmit}
                     className="space-y-6"
+                    aria-busy={isSubmitting}
+                    noValidate={false}
                   >
                     {/* Name + Business */}
                     <div className="grid gap-6 sm:grid-cols-2">
@@ -532,8 +658,10 @@ export default function Quote() {
                           id="name"
                           required
                           name="name"
+                          autoComplete="name"
                           placeholder="Juan Dela Cruz"
-                          className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
+                          disabled={isSubmitting}
+                          className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
                         />
                       </motion.div>
 
@@ -564,8 +692,10 @@ export default function Quote() {
                         <input
                           id="business"
                           name="business"
+                          autoComplete="organization"
                           placeholder="Your business"
-                          className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
+                          disabled={isSubmitting}
+                          className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
                         />
                       </motion.div>
                     </div>
@@ -601,8 +731,11 @@ export default function Quote() {
                           required
                           name="phone"
                           type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
                           placeholder="+63 9XX XXX XXXX"
-                          className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
+                          disabled={isSubmitting}
+                          className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
                         />
                       </motion.div>
 
@@ -635,8 +768,11 @@ export default function Quote() {
                           required
                           name="email"
                           type="email"
+                          inputMode="email"
+                          autoComplete="email"
                           placeholder="you@email.com"
-                          className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
+                          disabled={isSubmitting}
+                          className="mt-2 w-full border-b border-border bg-transparent py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
                         />
                       </motion.div>
                     </div>
@@ -670,13 +806,24 @@ export default function Quote() {
                         id="type"
                         name="type"
                         defaultValue="Food Cart"
-                        className="mt-2 w-full border-b border-border bg-background py-3 text-sm outline-none transition-colors focus:border-primary"
+                        disabled={isSubmitting}
+                        className="mt-2 w-full border-b border-border bg-background py-3 text-sm outline-none transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        <option>Food Cart</option>
-                        <option>Food Kiosk</option>
-                        <option>Custom Fabrication</option>
-                        <option>Business Solution</option>
-                        <option>Other</option>
+                        <option value="Food Cart">
+                          Food Cart
+                        </option>
+                        <option value="Food Kiosk">
+                          Food Kiosk
+                        </option>
+                        <option value="Custom Fabrication">
+                          Custom Fabrication
+                        </option>
+                        <option value="Business Solution">
+                          Business Solution
+                        </option>
+                        <option value="Other">
+                          Other
+                        </option>
                       </select>
                     </motion.div>
 
@@ -711,9 +858,46 @@ export default function Quote() {
                         name="message"
                         rows={4}
                         placeholder="Tell us what you want to build..."
-                        className="mt-2 w-full resize-none border-b border-border bg-transparent py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
+                        disabled={isSubmitting}
+                        className="mt-2 w-full resize-none border-b border-border bg-transparent py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground/40 focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
                       />
                     </motion.div>
+
+                    {/* Error */}
+                    {error && (
+                      <motion.div
+                        initial={{
+                          opacity: 0,
+                          y: 8,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        role="alert"
+                        aria-live="assertive"
+                        className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-600"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-red-500/30 text-[10px] font-bold"
+                            aria-hidden="true"
+                          >
+                            !
+                          </span>
+
+                          <div>
+                            <p className="font-semibold">
+                              We couldn&apos;t submit your request.
+                            </p>
+
+                            <p className="mt-0.5 text-red-600/80">
+                              {error}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
 
                     {/* Submit */}
                     <motion.button
@@ -733,12 +917,29 @@ export default function Quote() {
                         delay: 0.67,
                       }}
                       type="submit"
-                      className="group flex w-full items-center justify-between rounded-full bg-foreground px-6 py-4 text-sm font-bold text-background transition-all duration-300 hover:bg-primary hover:text-primary-foreground"
+                      disabled={isSubmitting}
+                      aria-disabled={isSubmitting}
+                      className="group flex w-full items-center justify-between rounded-full bg-foreground px-6 py-4 text-sm font-bold text-background transition-all duration-300 hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-foreground disabled:hover:text-background"
                     >
-                      <span>REQUEST A QUOTE</span>
+                      <span>
+                        {isSubmitting
+                          ? "SUBMITTING..."
+                          : "REQUEST A QUOTE"}
+                      </span>
 
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 transition-transform duration-300 group-hover:translate-x-1">
-                        <ArrowUpRight size={16} />
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 transition-transform duration-300 group-hover:translate-x-1 group-disabled:translate-x-0">
+                        {isSubmitting ? (
+                          <Loader2
+                            size={16}
+                            className="animate-spin"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <ArrowUpRight
+                            size={16}
+                            aria-hidden="true"
+                          />
+                        )}
                       </span>
                     </motion.button>
 
@@ -768,9 +969,9 @@ export default function Quote() {
           </motion.div>
         </div>
 
-        {/* =====================================================
+        {/* =========================================================
             BOTTOM BRAND LINE
-        ====================================================== */}
+        ========================================================= */}
         <motion.div
           initial={{
             opacity: 0,
